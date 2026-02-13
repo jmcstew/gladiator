@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import GameOverScreen from './GameOverScreen'
 import CapturedScreen from './CapturedScreen'
 import PleadScreen from './PleadScreen'
-import { 
-  createBloodSplatter, 
-  createBloodBurst, 
+import {
+  createBloodSplatter,
+  createBloodBurst,
   createBloodSplash,
-  BloodSplatter, 
+  BloodSplatter,
   DepthOfField,
   VignetteFocus,
   useScreenShake,
@@ -30,10 +30,10 @@ import { LowBlowTrigger, LowBlowAnimation } from './LowBlowEasterEgg'
 
 const API_URL = 'http://localhost:8000'
 
-function Arena({ 
-  gladiator, 
-  onCityChange, 
-  onGameOver, 
+function Arena({
+  gladiator,
+  onCityChange,
+  onGameOver,
   onRestart,
   combatStats: propCombatStats,
   setCombatStats: propSetCombatStats,
@@ -71,11 +71,11 @@ function Arena({
   // Auto-save after battle ends
   useEffect(() => {
     if (!gladiator) return
-    
+
     // Check if we just finished a battle (battle is null but we have combat data)
     const lastBattleEnded = localStorage.getItem('all_roads_last_battle_ended')
     const now = Date.now()
-    
+
     // Only auto-save once after battle ends
     if (lastBattleEnded && now - parseInt(lastBattleEnded) < 5000) {
       autoSave(gladiator, combatStats, settings)
@@ -98,7 +98,7 @@ function Arena({
   const [pleadResult, setPleadResult] = useState(null)
   const [victoryData, setVictoryData] = useState(null)
   const [lowBlowVictory, setLowBlowVictory] = useState(null)
-  
+
   // Combat Effects State
   const [bloodEffects, setBloodEffects] = useState([])
   const [depthOfField, setDepthOfField] = useState({ active: false, focusX: 50, focusY: 50, intensity: 'medium' })
@@ -107,22 +107,9 @@ function Arena({
   const [finisherActive, setFinisherActive] = useState(false)
   const [combo, setCombo] = useState(0)
   const [maxCombo, setMaxCombo] = useState(0)
-  
-  // Track combat stats for achievements
-  const [combatStats, setCombatStats] = useState({
-    wins: 0,
-    losses: 0,
-    totalDamageDealt: 0,
-    totalCrits: 0,
-    battlesNoDamage: 0,
-    maxCombo: 0,
-    level: gladiator.level || 1,
-    totalGoldEarned: 0,
-    legendaryItems: 0,
-    executed: 0,
-    successfulPleads: 0,
-  })
-  
+
+
+
   // Hooks for effects
   const { shaking, shakeIntensity, triggerShake } = useScreenShake()
   const { damages, addDamage, addCrit, addHeal, addMiss, addExecute, clear: clearDamages } = useDamageNumbers()
@@ -130,7 +117,7 @@ function Arena({
   const { audioState, setBattleState, playHitSound, playVictorySound, playDefeatSound, playLevelUpSound, playButtonSound, toggleMute, muted } = useCombatAudio()
   const { currentDialogue, showDialogue, say: sayDialogue } = useOpponentDialogue(battle?.opponent_name)
   const { recentAchievement, showNotification, dismissNotification, checkAchievements } = useAchievements(combatStats)
-  
+
   const logRef = useRef(null)
   const battlefieldRef = useRef(null)
   const comboTimerRef = useRef(null)
@@ -199,14 +186,14 @@ function Arena({
     setBloodEffects([])
     setCombo(0)
     clearDamages()
-    
+
     // Play button sound
     playButtonSound()
-    
+
     // Focus depth of field on battlefield
     setDepthOfField({ active: true, focusX: 50, focusY: 50, intensity: 'subtle' })
     setTimeout(() => setDepthOfField(prev => ({ ...prev, active: false })), 1000)
-    
+
     // Set battle music
     setBattleState(AUDIO_STATES.BATTLE_NORMAL)
 
@@ -215,7 +202,7 @@ function Arena({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
-      
+
       if (!res.ok) {
         const error = await res.json()
         setLog([`❌ ${error.detail || 'Battle failed'}`])
@@ -223,28 +210,28 @@ function Arena({
         setBattleState(AUDIO_STATES.IDLE)
         return
       }
-      
+
       const data = await res.json()
       setBattle(data)
       setGladiatorHP(data.gladiator_hp)
       setOpponentHP(data.opponent_hp)
-      
+
       // Track starting HP for "no damage" achievement
       battleStartHP.current = data.gladiator_hp
       enemyStartHP.current = data.opponent_hp
-      
+
       setLog([`⚔️ Battle started against ${data.opponent_name} (Lv.${data.opponent_level})!`])
-      
+
       // Focus on opponent during battle start
       setDepthOfField({ active: true, focusX: 70, focusY: 40, intensity: 'medium' })
       setTimeout(() => setDepthOfField(prev => ({ ...prev, active: false })), 1500)
-      
+
       // Show opponent pre-battle dialogue
       sayDialogue('preBattle')
-      
+
       // Enable actions after dialogue
       setLoading(false)
-      
+
       if (data.dialogue) {
         setLog(prev => [...prev, `\n💬 "${data.dialogue}"`])
       }
@@ -263,7 +250,7 @@ function Arena({
     setTimeout(() => setShowEffect(null), 500)
     triggerShake(action === 'special' ? 2 : 1, action === 'special' ? 200 : 300)
     setLoading(true)
-    
+
     // Combo increase
     const newCombo = combo + 1
     setCombo(newCombo)
@@ -271,40 +258,40 @@ function Arena({
       setMaxCombo(newCombo)
       setCombatStats(prev => ({ ...prev, maxCombo: newCombo }))
     }
-    
+
     try {
       const res = await fetch(`${API_URL}/arena/battle/${battle.battle_id}/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       })
-      
+
       const data = await res.json()
-      
+
       if (data.captured) {
         setIsCaptured(true)
         setCaptureDetails(data.captured_details)
         setShowEffect('captured')
         triggerShake(3, 500)
         playDefeatSound()
-        
+
         // Track stats
         setCombatStats(prev => ({
           ...prev,
           losses: prev.losses + 1,
           executed: data.executed ? prev.executed + 1 : prev.executed,
         }))
-        
-        setLog(prev => [...prev, 
-          `\n💀 ${data.message}`,
-          `\n📍 Sent back to: ${data.captured_details.new_city}`,
-          `📦 Lost equipment: ${data.captured_details.lost_equipment.join(', ') || 'None'}`
+
+        setLog(prev => [...prev,
+        `\n💀 ${data.message}`,
+        `\n📍 Sent back to: ${data.captured_details.new_city}`,
+        `📦 Lost equipment: ${data.captured_details.lost_equipment.join(', ') || 'None'}`
         ])
-        
+
         // Heavy vignette on capture
         setVignette({ active: true, focusX: 50, focusY: 50, intense: true })
         setTimeout(() => setVignette(prev => ({ ...prev, active: false })), 2000)
-        
+
         setBattleState(AUDIO_STATES.DEFEAT)
         onCityChange?.(data.captured_details.new_city)
         // Trigger auto-save after battle
@@ -313,12 +300,12 @@ function Arena({
         setLoading(false)
         return
       }
-      
+
       // Calculate hit intensity for blood effects
       const isCrit = data.damage_dealt > battle.opponent_level * 3
       const hitIntensity = isCrit ? 2 : (data.damage_dealt / battle.opponent_level)
       const isSpecial = action === 'special'
-      
+
       // Update combat stats
       if (data.damage_dealt > 0) {
         setCombatStats(prev => ({
@@ -327,7 +314,7 @@ function Arena({
           totalCrits: isCrit ? prev.totalCrits + 1 : prev.totalCrits,
         }))
       }
-      
+
       // Show damage number with new system
       if (data.damage_dealt > 0) {
         if (isCrit) {
@@ -339,46 +326,46 @@ function Arena({
         addMiss({ x: 70, y: 40 })
         sayDialogue('onHit') // Enemy taunts on miss
       }
-      
+
       // Play hit sound
       if (data.damage_dealt > 0) {
         playHitSound(isCrit)
       }
-      
+
       // Critical flash for big hits
       if (isCrit) {
         setCriticalFlash(true)
         setTimeout(() => setCriticalFlash(false), 150)
-        
+
         // Slow motion on critical hits
         triggerSlowMo(800)
-        
+
         // Focus depth of field
         setDepthOfField({ active: true, focusX: 70, focusY: 40, intensity: 'strong' })
         setTimeout(() => setDepthOfField(prev => ({ ...prev, active: false })), 500)
-        
+
         // Enemy reacts to crit
         sayDialogue('onCrit')
       } else if (data.damage_dealt > 0) {
         // Enemy taunts on normal hit
         sayDialogue('onHit')
       }
-      
+
       // Blood splatter on opponent hit
       if (data.damage_dealt > 0 && !isSpecial) {
         triggerBloodEffect('splash', 70 + Math.random() * 10, 40 + Math.random() * 10, hitIntensity)
       }
-      
+
       // Heavy blood burst on critical hits
       if (isCrit) {
         triggerBloodEffect('burst', 70, 40, 2)
       }
-      
+
       // Screen shake on big hits
       if (data.damage_dealt > battle.opponent_level * 2 || isSpecial) {
         triggerShake(isCrit ? 3 : (isSpecial ? 2 : 1), isCrit ? 400 : 300)
       }
-      
+
       // Handle Plead result
       if (action === 'plead') {
         setLoading(false)
@@ -388,7 +375,7 @@ function Arena({
         }
         setPleadResult(result)
         setShowPlead(true)
-        
+
         if (data.escaped) {
           setCombatStats(prev => ({ ...prev, successfulPleads: prev.successfulPleads + 1 }))
           setDepthOfField({ active: true, focusX: 50, focusY: 50, intensity: 'subtle' })
@@ -397,25 +384,25 @@ function Arena({
         }
         return
       }
-      
+
       if (data.escaped === false && data.spared === false) {
         setLog(prev => [...prev, `💀 PLEA DENIED! The Emperor shows no mercy!`])
         triggerShake(2, 500)
         setVignette({ active: true, focusX: 50, focusY: 50, intense: true })
         setTimeout(() => setVignette(prev => ({ ...prev, active: false })), 1500)
       }
-      
+
       // Check for low HP dialogue
       if (data.opponent_hp <= battle.opponent_level * 2) {
         sayDialogue('lowHP')
       }
-      
+
       const roundLog = [
         `📍 Round ${data.rounds}:`,
         `   You used ${action}: Dealt ${data.damage_dealt}, Took ${data.damage_taken}`,
         `   Your HP: ${data.gladiator_hp} | Opponent HP: ${data.opponent_hp}`,
       ]
-      
+
       if (data.victory === true) {
         roundLog.push(`🎉 VICTORY! +${data.gold_earned} gold, +${data.experience_earned} XP`)
         if (data.leveled_up) {
@@ -425,50 +412,50 @@ function Arena({
         }
         setShowEffect('victory')
         setLastBattleId(battle.battle_id)
-        
+
         // Track no-damage victory
         if (battleStartHP.current && battleStartHP.current === data.gladiator_hp) {
           setCombatStats(prev => ({ ...prev, battlesNoDamage: prev.battlesNoDamage + 1 }))
         }
-        
+
         // Track gold earned
         setCombatStats(prev => ({ ...prev, wins: prev.wins + 1, totalGoldEarned: prev.totalGoldEarned + data.gold_earned }))
-        
+
         // Show victory popup
         setVictoryData({ gold: data.gold_earned, xp: data.experience_earned })
         setTimeout(() => setVictoryData(null), 2000)
-        
+
         // Play victory sound
         playVictorySound()
         setBattleState(AUDIO_STATES.VICTORY)
-        
+
         // Victory effects
         setFinisherActive(true)
         setTimeout(() => setFinisherActive(false), 1000)
-        
+
         // Victory vignette
         setVignette({ active: true, focusX: 50, focusY: 50, intense: false })
         setTimeout(() => setVignette(prev => ({ ...prev, active: false })), 2000)
-        
+
         // Blood pool effect
         triggerBloodEffect('pool', 70, 55, 1)
-        
+
         // Enemy defeat dialogue
         sayDialogue('defeat')
-        
+
       } else if (data.victory === false) {
         roundLog.push(`💀 DEFEAT! +${data.experience_earned} XP`)
         setShowEffect('defeat')
         triggerShake(3, 500)
         playDefeatSound()
         setBattleState(AUDIO_STATES.DEFEAT)
-        
+
         // Track stats
         setCombatStats(prev => ({ ...prev, losses: prev.losses + 1, executed: data.executed ? prev.executed + 1 : prev.executed }))
-        
+
         // Heavy blood on defeat
         triggerBloodEffect('burst', 70, 40, 1.5)
-        
+
         if (data.executed) {
           setGameOver(true)
           setVignette({ active: true, focusX: 50, focusY: 50, intense: true })
@@ -476,11 +463,11 @@ function Arena({
           sayDialogue('victory') // Enemy boasts on victory
         }
       }
-      
+
       setLog(prev => [...prev, roundLog.join('\n')])
       setGladiatorHP(data.gladiator_hp)
       setOpponentHP(data.opponent_hp)
-      
+
       if (data.victory !== null) {
         // Trigger auto-save after battle
         localStorage.setItem('all_roads_last_battle_ended', Date.now().toString())
@@ -517,12 +504,12 @@ function Arena({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ item_id: itemId }),
       })
-      
+
       if (res.ok) {
         const data = await res.json()
         setLog(prev => [...prev, `🏆 Looted: ${data.item.name}!`])
         setShowLoot(false)
-        
+
         // Track legendary items
         if (data.item.rarity === 'legendary') {
           setCombatStats(prev => ({ ...prev, legendaryItems: prev.legendaryItems + 1 }))
@@ -568,19 +555,19 @@ function Arena({
       <DepthOfField {...depthOfField} />
       <VignetteFocus {...vignette} />
       <ComboCounter combo={combo} maxCombo={maxCombo} />
-      
+
       {/* Achievement Notification */}
-      <AchievementNotification 
+      <AchievementNotification
         achievement={recentAchievement}
         show={showNotification}
         onDismiss={dismissNotification}
       />
-      
+
       {/* Dialogue Box */}
-      <DialogueBox 
+      <DialogueBox
         dialogue={currentDialogue}
         show={showDialogue}
-        onComplete={() => {}}
+        onComplete={() => { }}
       />
 
       {/* Player Panel */}
@@ -590,7 +577,7 @@ function Arena({
           {gladiator.gender === 'male' ? '👨' : '👩'}
         </div>
         <p className="city-badge">📍 {gladiator.current_city || 'Capua'}</p>
-        
+
         <div className="stats-grid" style={{ marginTop: '1rem' }}>
           <div className="stat">
             <div className="stat-value">{gladiator.strength}</div>
@@ -609,7 +596,7 @@ function Arena({
             <div className="stat-label">CHA</div>
           </div>
         </div>
-        
+
         {/* Smooth HP Bar for Player */}
         <div style={{ marginTop: '1rem', width: '100%' }}>
           <SmoothHPBar
@@ -621,7 +608,7 @@ function Arena({
             showPrediction={true}
           />
         </div>
-        
+
         {gladiator.current_city !== 'Capua' && (
           <div className="capture-warning">
             ⚠️ Lose = Capture & Equipment Loss!
@@ -630,22 +617,22 @@ function Arena({
       </div>
 
       {/* Battlefield */}
-      <div 
+      <div
         ref={battlefieldRef}
         className={`battlefield card ${shaking ? 'screen-shake' : ''}`}
-        style={{ 
-          backgroundImage: 'url(/assets/arena-bg.png)', 
+        style={{
+          backgroundImage: 'url(/assets/arena-bg.png)',
           backgroundSize: 'cover',
           position: 'relative',
           overflow: 'hidden',
         }}
       >
         <BloodSplatter effects={bloodEffects} onComplete={removeBloodEffect} />
-        
+
         <h3>🏟️ {gladiator.current_city || 'Capua'} Arena</h3>
-        
+
         {isCaptured ? (
-          <CapturedScreen 
+          <CapturedScreen
             gladiator={gladiator}
             captureDetails={captureDetails}
             onContinue={() => {
@@ -658,23 +645,23 @@ function Arena({
           <div className="battle-start">
             <p style={{ marginBottom: '1rem' }}>Choose your challenge in {gladiator.current_city || 'Capua'}:</p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button 
-                className="btn btn-primary" 
+              <button
+                className="btn btn-primary"
                 onClick={() => startBattle('arena')}
                 disabled={loading}
               >
                 ⚔️ Arena Fight
               </button>
-              <button 
-                className="btn btn-secondary" 
+              <button
+                className="btn btn-secondary"
                 onClick={() => startBattle('tournament')}
                 disabled={loading}
               >
                 🏆 Tournament
               </button>
               {gladiator.current_city === 'Rome' && (
-                <button 
-                  className="btn btn-danger" 
+                <button
+                  className="btn btn-danger"
                   onClick={() => startBattle('boss')}
                   disabled={loading}
                 >
@@ -682,7 +669,7 @@ function Arena({
                 </button>
               )}
             </div>
-            
+
             {gladiator.current_city !== 'Capua' && (
               <p className="warning-text">
                 ⚠️ Warning: Outside Capua, defeat means capture and equipment loss!
@@ -692,7 +679,7 @@ function Arena({
         ) : (
           <div className="battle-active">
             <h4>VS {battle.opponent_name}</h4>
-            
+
             {/* Combat Effect */}
             {showEffect && (
               <div className="combat-effect" style={{
@@ -702,14 +689,14 @@ function Arena({
                 transform: 'translate(-50%, -50%)',
                 zIndex: 100,
               }}>
-                <img 
-                  src={effects[showEffect]} 
+                <img
+                  src={effects[showEffect]}
                   alt={showEffect}
                   style={{ width: '200px', height: '200px', objectFit: 'contain' }}
                 />
               </div>
             )}
-            
+
             {/* Smooth HP Bar for Enemy */}
             <div style={{ margin: '1rem 0', position: 'relative' }}>
               <SmoothHPBar
@@ -720,11 +707,11 @@ function Arena({
                 colorScheme="blood"
                 showPrediction={true}
               />
-              
+
               {/* Floating Damage Numbers */}
-              <DamageNumbers 
-                damages={damages} 
-                onComplete={(id) => {}} 
+              <DamageNumbers
+                damages={damages}
+                onComplete={(id) => { }}
               />
             </div>
 
@@ -742,7 +729,7 @@ function Arena({
                   <p>Choose ONE item from your defeated opponent:</p>
                   <div className="loot-options">
                     {availableLoot.map(item => (
-                      <div 
+                      <div
                         key={item.id}
                         className="loot-item"
                         onClick={() => lootItem(item.id)}
@@ -757,8 +744,8 @@ function Arena({
                       </div>
                     ))}
                   </div>
-                  <button 
-                    className="btn btn-secondary" 
+                  <button
+                    className="btn btn-secondary"
                     style={{ marginTop: '1rem' }}
                     onClick={() => setShowLoot(false)}
                   >
@@ -769,29 +756,29 @@ function Arena({
             )}
 
             <div className="battle-controls">
-              <button 
-                className="btn btn-primary" 
+              <button
+                className="btn btn-primary"
                 onClick={() => takeAction('attack')}
                 disabled={loading}
               >
                 🗡️ Attack
               </button>
-              <button 
-                className="btn btn-secondary" 
+              <button
+                className="btn btn-secondary"
                 onClick={() => takeAction('defend')}
                 disabled={loading}
               >
                 🛡️ Defend
               </button>
-              <button 
-                className="btn btn-secondary" 
+              <button
+                className="btn btn-secondary"
                 onClick={() => takeAction('special')}
                 disabled={loading}
               >
                 ✨ Special
               </button>
-              <button 
-                className="btn btn-plead" 
+              <button
+                className="btn btn-plead"
                 onClick={() => takeAction('plead')}
                 disabled={loading}
                 style={{
@@ -828,8 +815,8 @@ function Arena({
               }}
             >
               <div className="avatar opponent-portrait">
-                <img 
-                  src={getOpponentPortrait(battle.opponent_name)} 
+                <img
+                  src={getOpponentPortrait(battle.opponent_name)}
                   alt={battle.opponent_name}
                   style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                 />
@@ -846,15 +833,15 @@ function Arena({
 
       {/* Game Over Screen */}
       {gameOver && (
-        <GameOverScreen 
-          gladiator={gladiator} 
+        <GameOverScreen
+          gladiator={gladiator}
           onRestart={onRestart}
         />
       )}
-      
+
       {/* Captured Screen */}
       {isCaptured && (
-        <CapturedScreen 
+        <CapturedScreen
           gladiator={gladiator}
           captureDetails={captureDetails}
           onContinue={() => {
@@ -864,7 +851,7 @@ function Arena({
           }}
         />
       )}
-      
+
       {/* Plead Screen */}
       {showPlead && (
         <PleadScreen
@@ -895,16 +882,16 @@ function Arena({
           }}
         />
       )}
-      
+
       {/* Low Blow Animation Overlay */}
-      <LowBlowAnimation 
+      <LowBlowAnimation
         show={!!lowBlowVictory}
         opponentName={battle?.opponent_name}
         onComplete={() => setLowBlowVictory(null)}
       />
-      
+
       {/* Victory Popup */}
-      <VictoryPopup 
+      <VictoryPopup
         show={!!victoryData}
         onComplete={() => setVictoryData(null)}
         gold={victoryData?.gold || 0}

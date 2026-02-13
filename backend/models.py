@@ -214,6 +214,7 @@ class GladiatorPet(Base):
     gladiator = relationship("Gladiator", back_populates="pets")
     pet = relationship("Pet")
 
+
 # Homeland Bonuses
 HOMELAND_BONUSES = {
     "Rome": {"charisma": 2, "intelligence": 1},
@@ -222,3 +223,16 @@ HOMELAND_BONUSES = {
     "Egypt": {"agility": 2, "intelligence": 1},
     "Germania": {"strength": 2, "endurance": 1},
 }
+
+# Combat Styles
+COMBAT_STYLES = {
+    "murmillo": {"name": "Murmillo", "desc": "Sword and Shield", "bonus": {"strength": 1, "endurance": 2}},
+    "retiarius": {"name": "Retiarius", "desc": "Trident and Net", "bonus": {"agility": 3}},
+    "thraex": {"name": "Thraex", "desc": "Curved Sword and Small Shield", "bonus": {"agility": 2, "strength": 1}},
+    "hoplite": {"name": "Hoplite", "desc": "Spear and Shield", "bonus": {"endurance": 2, "strength": 1}},
+    "dimachaerus": {"name": "Dimachaerus", "desc": "Dual Swords", "bonus": {"agility": 2, "strength": 1}},
+    "bestiarius": {"name": "Bestiarius", "desc": "Beast Fighter", "bonus": {"strength": 2, "agility": 1}},
+    "champion": {"name": "Champion", "desc": "Master of all styles", "bonus": {"strength": 3, "agility": 3, "endurance": 3}},
+    "gladiator": {"name": "Gladiator", "desc": "Standard Gladiator", "bonus": {"strength": 1, "agility": 1, "endurance": 1}}
+}
+
