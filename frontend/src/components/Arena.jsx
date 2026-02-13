@@ -538,17 +538,22 @@ function Arena({
 
   const getOpponentPortrait = (name) => {
     const portraits = {
-      'Valerius': '/assets/opponent-1-valerius.png',
-      'Boudicca': '/assets/opponent-2-boudicca.png',
+      // Capua opponents (no images yet - use generic defeat)
+      'Crixus': '/assets/defeat.png',
+      'Varro': '/assets/defeat.png',
+      'Priscus': '/assets/defeat.png',
+      // Alexandria opponents
       'Sicarius': '/assets/opponent-3-sicarius.png',
-      'Kriemhild': '/assets/opponent-4-kriemhild.png',
-      'Xylon': '/assets/opponent-5-xylon.png',
       'Amazonia': '/assets/opponent-6-amazonia.png',
-      'Spartacus': '/assets/opponent-7-spartacus.png',
-      'Lycus': '/assets/opponent-8-lycus.png',
-      'Lyca': '/assets/opponent-8-lycus.png',
-      'Cassia': '/assets/opponent-9-cassia.png',
+      'Kriemhild': '/assets/opponent-4-kriemhild.png',
+      "Boudicca's Daughter": '/assets/opponent-2-boudicca.png',
+      // Rome opponents
+      'Spartacus Reborn': '/assets/opponent-7-spartacus.png',
+      'Lycus the Beast': '/assets/opponent-8-lycus.png',
+      'Lyca the Beast': '/assets/opponent-8-lycus.png',
+      'Cassia the Scarlet': '/assets/opponent-9-cassia.png',
       'Grimhild': '/assets/opponent-10-grimhild.png',
+      'Xylon the Broken': '/assets/opponent-5-xylon.png',
     }
     return portraits[name] || '/assets/defeat.png'
   }
