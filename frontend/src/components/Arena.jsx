@@ -538,10 +538,10 @@ function Arena({
 
   const getOpponentPortrait = (name) => {
     const portraits = {
-      // Capua opponents (no images yet - use generic defeat)
-      'Crixus': '/assets/defeat.png',
-      'Varro': '/assets/defeat.png',
-      'Priscus': '/assets/defeat.png',
+      // Capua opponents
+      'Crixus': '/assets/opponent-crixus.png',
+      'Varro': '/assets/opponent-varro.png',
+      'Priscus': '/assets/opponent-priscus.png',
       // Alexandria opponents
       'Sicarius': '/assets/opponent-3-sicarius.png',
       'Amazonia': '/assets/opponent-6-amazonia.png',
