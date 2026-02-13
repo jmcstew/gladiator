@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 
-function SplashScreen({ onEnter }) {
+function SplashScreen({ onEnter, onLoad }) {
   const [show, setShow] = useState(true)
   const [fadeOut, setFadeOut] = useState(false)
 
@@ -16,33 +16,48 @@ function SplashScreen({ onEnter }) {
   return (
     <div className={`splash-screen ${fadeOut ? 'fade-out' : ''}`}>
       <div className="splash-background">
-        <img 
-          src="/assets/splash-screen.png" 
-          alt="All Roads Lead to Rome" 
+        <img
+          src="/assets/splash-screen.png"
+          alt="All Roads Lead to Rome"
           className="splash-image"
         />
         <div className="splash-overlay" />
       </div>
-      
+
       <div className="splash-content">
         <h1 className="game-title">
           <span className="title-line">ALL ROADS</span>
           <span className="title-line lead">LEAD TO</span>
           <span className="title-line rome">ROME</span>
         </h1>
-        
+
         <p className="tagline">
           Rise from the sands of Capua to the golden throne of the Colosseum
         </p>
-        
-        <button 
-          className="enter-button"
-          onClick={handleEnter}
-        >
-          <span className="button-text">ENTER THE ARENA</span>
-          <span className="button-icon">⚔️</span>
-        </button>
-        
+
+        <div className="button-group" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+          <button
+            className="enter-button"
+            onClick={handleEnter}
+          >
+            <span className="button-text">ENTER THE ARENA</span>
+            <span className="button-icon">⚔️</span>
+          </button>
+
+          <button
+            className="load-button"
+            onClick={() => {
+              setFadeOut(true)
+              setTimeout(() => {
+                onLoad?.()
+              }, 1000)
+            }}
+          >
+            <span className="button-text">LOAD GAME</span>
+            <span className="button-icon">📂</span>
+          </button>
+        </div>
+
         <div className="features">
           <div className="feature">
             <span className="feature-icon">🏟️</span>
@@ -225,6 +240,29 @@ function SplashScreen({ onEnter }) {
           font-size: 1.5rem;
         }
         
+        .load-button {
+          background: rgba(0, 0, 0, 0.6);
+          border: 1px solid #FFD700;
+          padding: 1rem 3rem;
+          font-size: 1.1rem;
+          font-family: 'Cinzel', serif;
+          color: #FFD700;
+          cursor: pointer;
+          border-radius: 8px;
+          display: inline-flex;
+          align-items: center;
+          gap: 1rem;
+          transition: all 0.3s ease;
+          width: 100%;
+          justify-content: center;
+        }
+
+        .load-button:hover {
+          background: rgba(218, 165, 32, 0.2);
+          transform: translateY(-2px);
+          box-shadow: 0 0 20px rgba(218, 165, 32, 0.2);
+        }
+
         .features {
           display: flex;
           justify-content: center;

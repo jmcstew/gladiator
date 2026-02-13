@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
+import { Routes, Route, Link, useNavigate } from 'react-router-dom'
 import CharacterCreation from './components/CharacterCreation'
 import Arena from './components/Arena'
 import Shop from './components/Shop'
@@ -40,6 +40,7 @@ function App() {
     bossesDefeated: [],
   })
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
+  const navigate = useNavigate()
 
   // Load saved settings on mount
   useEffect(() => {
@@ -89,18 +90,19 @@ function App() {
       level: savedData.combatStats.level,
       total_gold_earned: savedData.combatStats.totalGoldEarned,
     })
-    
+
     // Set combat stats
     setCombatStats(savedData.combatStats)
-    
+
     // Set settings
     if (savedData.settings) {
       setSettings(savedData.settings)
     }
-    
-    // Close save menu
+
+    // Close save menu and navigate to world map or arena
     setShowSaveMenu(false)
-  }, [])
+    navigate('/worldmap')
+  }, [navigate])
 
   const handleSplashComplete = () => {
     setShowSplash(false)
@@ -131,9 +133,15 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      {showSplash && <SplashScreen onEnter={handleSplashComplete} />}
-      
+    <>
+      {showSplash && <SplashScreen
+        onEnter={handleSplashComplete}
+        onLoad={() => {
+          handleSplashComplete()
+          setShowSaveMenu(true)
+        }}
+      />}
+
       {showSaveMenu && (
         <SaveSlots
           gladiator={gladiator}
@@ -141,13 +149,13 @@ function App() {
           settings={settings}
           onSaveComplete={() => {
             // Save completed, just close after a moment
-            setTimeout(() => {}, 500)
+            setTimeout(() => { }, 500)
           }}
           onLoadComplete={handleLoadSave}
           onClose={() => setShowSaveMenu(false)}
         />
       )}
-      
+
       <div className={`app ${showSplash ? 'hidden' : ''}`}>
         <header className="header">
           <h1>ALL ROADS LEAD TO ROME</h1>
@@ -196,8 +204,8 @@ function App() {
             <Route path="/worldmap" element={gladiator ? <WorldMap gladiator={gladiator} onTravel={(city) => {
               loadGladiator(gladiator.id)
             }} /> : <Link to="/create">Create a gladiator first!</Link>} />
-            <Route path="/arena" element={gladiator ? <Arena 
-              gladiator={gladiator} 
+            <Route path="/arena" element={gladiator ? <Arena
+              gladiator={gladiator}
               combatStats={combatStats}
               setCombatStats={setCombatStats}
               settings={settings}
@@ -236,7 +244,7 @@ function App() {
           <p>ALL ROADS LEAD TO ROME v0.5.0 - Save System & AAA Polish</p>
         </footer>
       </div>
-    </BrowserRouter>
+    </>
   )
 }
 

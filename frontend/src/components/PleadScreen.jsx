@@ -4,7 +4,7 @@ function PleadScreen({ gladiator, city, pleaResult, onContinue, onMercy, onNoMer
   const [animationPhase, setAnimationPhase] = useState('pleading') // pleading, judging, verdict
   const [thumbAngle, setThumbAngle] = useState(0)
   const [showResult, setShowResult] = useState(false)
-  
+
   const thumbRef = useRef(null)
   const animationRef = useRef(null)
 
@@ -38,12 +38,22 @@ function PleadScreen({ gladiator, city, pleaResult, onContinue, onMercy, onNoMer
 
   const config = cityConfig[city] || cityConfig.Capua
 
+  // Move from pleading to judging after 2 seconds
+  useEffect(() => {
+    if (animationPhase === 'pleading') {
+      const timer = setTimeout(() => {
+        setAnimationPhase('judging')
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [animationPhase])
+
   // Oscillate thumb animation
   useEffect(() => {
     if (animationPhase === 'judging') {
       let angle = 0
       let direction = 1
-      
+
       const animate = () => {
         // Oscillate between -45 (thumbs down) and 45 (thumbs up)
         angle += 2 * direction
@@ -52,15 +62,15 @@ function PleadScreen({ gladiator, city, pleaResult, onContinue, onMercy, onNoMer
         setThumbAngle(angle)
         animationRef.current = requestAnimationFrame(animate)
       }
-      
+
       animationRef.current = requestAnimationFrame(animate)
-      
+
       // After oscillating, show verdict
       const verdictTimer = setTimeout(() => {
         setAnimationPhase('verdict')
         setShowResult(true)
       }, 3000)
-      
+
       return () => {
         cancelAnimationFrame(animationRef.current)
         clearTimeout(verdictTimer)
@@ -167,7 +177,7 @@ function PleadScreen({ gladiator, city, pleaResult, onContinue, onMercy, onNoMer
             width: '200px',
             height: '200px',
             margin: '0 auto',
-            animation: showResult 
+            animation: showResult
               ? (pleaResult?.spared ? 'victory-bounce 0.5s ease' : 'defeat-shake 0.5s ease')
               : 'plead-shake 2s ease-in-out infinite',
             borderRadius: '50%',
@@ -175,7 +185,7 @@ function PleadScreen({ gladiator, city, pleaResult, onContinue, onMercy, onNoMer
             border: '3px solid rgba(255,255,255,0.3)',
             boxShadow: '0 0 30px rgba(0,0,0,0.5)',
           }}>
-            <img 
+            <img
               src={`/assets/pleading-${gladiator?.gender || 'male'}.png`}
               alt="Pleading gladiator"
               style={{
@@ -206,7 +216,7 @@ function PleadScreen({ gladiator, city, pleaResult, onContinue, onMercy, onNoMer
               transition: 'transform 0.1s linear',
               filter: `drop-shadow(0 0 20px ${getThumbColor()})`,
             }}>
-              <img 
+              <img
                 src="/assets/thumb-up.png"
                 alt="Thumb"
                 style={{
@@ -236,12 +246,12 @@ function PleadScreen({ gladiator, city, pleaResult, onContinue, onMercy, onNoMer
               width: '250px',
               height: '250px',
               marginBottom: '1rem',
-              animation: pleaResult?.spared 
+              animation: pleaResult?.spared
                 ? 'victory-pulse 1s ease-in-out infinite'
                 : 'none',
               filter: `drop-shadow(0 0 30px ${getThumbColor()})`,
             }}>
-              <img 
+              <img
                 src={pleaResult?.spared ? '/assets/thumb-up.png' : '/assets/thumb-down.png'}
                 alt={pleaResult?.spared ? 'Mercy' : 'No Mercy'}
                 style={{

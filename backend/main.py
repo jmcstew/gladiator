@@ -442,7 +442,7 @@ def battle_action(battle_id: str, action: BattleRound, db: Session = Depends(get
         damage_dealt = random.randint(gladiator.strength, gladiator.strength * 2)
         damage_taken = random.randint(battle.opponent_level * 4, battle.opponent_level * 6)
     elif action.action == "plead":
-        # Pleading to the emperor - charisma based chance to be spared
+        # Pleading - charisma based chance to be spared
         charisma = gladiator.charisma or 0
         
         # Calculate charisma bonus (base 20% + charisma modifier)
@@ -451,25 +451,35 @@ def battle_action(battle_id: str, action: BattleRound, db: Session = Depends(get
         flee_chance = min(0.80, base_chance + charisma_bonus)
         
         if random.random() < flee_chance:
+            # PLEA GRANTED - SUCCESS
             return {
-                "message": "You pleaded with the Emperor... and they MERCED! You live to fight another day!",
+                "message": "You pleaded with the Emperor... and they MERCY! You live to fight another day!",
                 "victory": False,
                 "escaped": True,
-                "spared": True
+                "spared": True,
+                "gladiator_hp": max(1, gladiator.endurance * 10 - battle.damage_taken),
+                "opponent_hp": battle.opponent_level * 10 - battle.damage_dealt 
             }
         else:
-            # Failed to plead - face capture/execution
-            return {
-                "message": "The Emperor has spoken: No mercy! You are to be... dealt with.",
-                "victory": False,
-                "escaped": False,
-                "spared": False
-            }
+            # PLEA DENIED - INSTANT DEATH/CAPTURE
+            # Set damage taken to max HP to force defeat logic
+            gladiator_max_hp = gladiator.endurance * 10
+            damage_taken = gladiator_max_hp - battle.damage_taken + 10 # Ensure overkill
+            # We don't apply it to battle.damage_taken yet, we let the update logic handle it
+            
+            # Special flag to indicate plea denial for the logic below
+            action.target = "plea_denied" 
     
     # Update battle
     battle.rounds += 1
     battle.damage_dealt += damage_dealt
     battle.damage_taken += damage_taken
+    
+    # If plea was denied, ensure we force the HP to 0 or less
+    if action.action == "plead" and action.target == "plea_denied":
+        # Force correct damage to kill
+        current_hp = (gladiator.endurance * 10) - (battle.damage_taken - damage_taken) # pre-update HP
+        battle.damage_taken += current_hp + 10 # Overkill
     
     gladiator_hp = gladiator.endurance * 10 - battle.damage_taken
     opponent_hp = battle.opponent_level * 10 - battle.damage_dealt
@@ -498,28 +508,37 @@ def battle_action(battle_id: str, action: BattleRound, db: Session = Depends(get
             gladiator.endurance += 2
             leveled_up = True
             
-    elif gladiator_hp <= 0 or (action.action == "plead" and battle.damage_taken >= gladiator.endurance * 10):
+    elif gladiator_hp <= 0:
         victory = False
         battle.victory = False
         
-        # Handle PLEDGE FAILED case (plead but denied)
-        if action.action == "plead" and battle.damage_taken >= gladiator.endurance * 10:
-            # Player tried to plead but was denied - skip damage, go straight to fate
-            battle.damage_taken = gladiator.endurance * 10
-            battle.message = "The Emperor has spoken: No mercy! You are to be... dealt with."
-        else:
-            battle.experience_earned = battle.opponent_level * 10
-            gladiator.experience += battle.experience_earned
-            
         gladiator.losses += 1
         
-        # ============ EXECUTION LOGIC (Lose in Capua or Plead Denied) ============
-        # If player loses in Capua or their plea was denied, they are executed - GAME OVER
-        if gladiator.current_city == "Capua" or (action.action == "plead" and battle.damage_taken >= gladiator.endurance * 10):
+        # Determine city strictly
+        current_city = gladiator.current_city
+        if not current_city or current_city.strip() == "":
+            current_city = "Capua"
+            
+        is_capua = current_city == "Capua"
+        is_plea_denied = (action.action == "plead" and action.target == "plea_denied")
+        
+        # ============ EXECUTION LOGIC ============
+        # If player loses in Capua OR their plea was specifically denied (regardless of city, plea denial is fatal usually, 
+        # but let's stick to the prompt: Lose in Capua = Execution.
+        # Plea denial forces HP=0, so it counts as a loss.
+        # If you plead and fail in another city, does it mean capture or death?
+        # Typically plea = "Mercy or Death". So Plea Denial should probably be Execution everywhere.
+        # But to be safe with the prompt "Lose in Capua -> Execution", we ensure Capua loss is execution.
+        
+        if is_capua or is_plea_denied:
             gladiator.is_active = False  # Mark as dead
             gladiator.is_captive = False
             
             db.commit()
+            
+            msg = "You have been executed in the arena!"
+            if is_plea_denied:
+                msg = "The Emperor shows NO MERCY. You are executed!"
             
             return {
                 "battle_id": battle_id,
@@ -531,7 +550,7 @@ def battle_action(battle_id: str, action: BattleRound, db: Session = Depends(get
                 "victory": False,
                 "executed": True,
                 "game_over": True,
-                "message": "You have been executed in the arena!",
+                "message": msg,
                 "final_stats": {
                     "level": gladiator.level,
                     "wins": gladiator.wins,
@@ -541,9 +560,8 @@ def battle_action(battle_id: str, action: BattleRound, db: Session = Depends(get
             }
         
         # ============ CAPTURE LOGIC (Rogue-like) ============
-        # Player is captured and sent back to Capua
-        # All equipment is lost, but physical stats remain
-        if gladiator.current_city != "Capua":
+        # Player is captured and sent back to Capua (only if NOT in Capua)
+        else:
             gladiator.is_captive = True
             gladiator.capture_count += 1
             
@@ -588,7 +606,7 @@ def battle_action(battle_id: str, action: BattleRound, db: Session = Depends(get
                 "opponent_hp": max(0, opponent_hp),
                 "victory": False,
                 "captured": True,
-                "message": f"CAPTURED! You've been taken prisoner and shipped back to Capua.",
+                "message": f"CAPTURED! You've been defeated in {old_city} and shipped back to the ludus in Capua.",
                 "captured_details": {
                     "old_city": old_city,
                     "new_city": "Capua",

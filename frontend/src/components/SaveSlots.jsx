@@ -2,13 +2,13 @@
 import React, { useState, useRef } from 'react'
 import { useSaveSystem } from '../hooks/useSaveSystem'
 
-const SaveSlots = ({ 
-  gladiator, 
-  combatStats, 
+const SaveSlots = ({
+  gladiator,
+  combatStats,
   settings,
   onSaveComplete,
   onLoadComplete,
-  onClose 
+  onClose
 }) => {
   const {
     saveSlots,
@@ -25,12 +25,12 @@ const SaveSlots = ({
     formatTimestamp,
     getSlotDetails,
   } = useSaveSystem()
-  
+
   const [activeTab, setActiveTab] = useState('save') // 'save' | 'load' | 'settings'
   const [importFile, setImportFile] = useState(null)
   const [message, setMessage] = useState(null)
   const fileInputRef = useRef(null)
-  
+
   // Show temporary message
   const showMessage = (text, type = 'success') => {
     setMessage({ text, type })
@@ -42,7 +42,7 @@ const SaveSlots = ({
       showMessage('No character to save!', 'error')
       return
     }
-    
+
     const success = saveToSlot(slotId, gladiator, combatStats, settings)
     if (success) {
       showMessage(`Saved to ${slotId === 1 ? 'Auto-Save' : `Slot ${slotId}`}`, 'success')
@@ -84,11 +84,11 @@ const SaveSlots = ({
   const handleImport = (e) => {
     const file = e.target.files[0]
     if (!file) return
-    
+
     // Ask which slot to import to
     const slotId = prompt('Import to which slot? (2 or 3)', '2')
     if (slotId !== '2' && slotId !== '3') return
-    
+
     importSave(file, parseInt(slotId))
       .then((data) => {
         showMessage('Save imported!', 'success')
@@ -97,7 +97,7 @@ const SaveSlots = ({
       .catch((err) => {
         showMessage(err.message, 'error')
       })
-    
+
     // Reset input
     setImportFile(null)
     if (fileInputRef.current) {
@@ -110,7 +110,7 @@ const SaveSlots = ({
       showMessage('Cannot delete auto-save!', 'error')
       return
     }
-    
+
     if (confirm(`Delete Slot ${slotId}? This cannot be undone.`)) {
       deleteSlot(slotId)
       showMessage('Slot deleted!', 'success')
@@ -159,7 +159,7 @@ const SaveSlots = ({
           }}>
             💾 Save / Load
           </h2>
-          <button 
+          <button
             onClick={onClose}
             style={{
               background: 'none',
@@ -190,7 +190,7 @@ const SaveSlots = ({
             <span style={{ flex: 1 }}>
               Auto-saved {formatTimestamp(lastAutoSave)}
             </span>
-            <button 
+            <button
               className="btn btn-secondary"
               style={{ padding: '0.3rem 0.8rem', fontSize: '0.8rem' }}
               onClick={handleLoadAuto}
@@ -204,8 +204,8 @@ const SaveSlots = ({
         {/* Message */}
         {message && (
           <div style={{
-            background: message.type === 'error' 
-              ? 'rgba(244, 67, 54, 0.2)' 
+            background: message.type === 'error'
+              ? 'rgba(244, 67, 54, 0.2)'
               : 'rgba(76, 175, 80, 0.2)',
             border: `1px solid ${message.type === 'error' ? '#f44336' : '#4CAF50'}`,
             borderRadius: '8px',
@@ -230,7 +230,7 @@ const SaveSlots = ({
               style={{
                 flex: 1,
                 padding: '0.75rem',
-                background: activeTab === tab 
+                background: activeTab === tab
                   ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.3), rgba(139, 69, 19, 0.3))'
                   : 'rgba(255, 255, 255, 0.05)',
                 border: `1px solid ${activeTab === tab ? '#DAA520' : 'rgba(255, 255, 255, 0.1)'}`,
@@ -251,7 +251,7 @@ const SaveSlots = ({
           <div className="save-slots">
             {saveSlots.map(slot => {
               const details = slot.hasData ? getSlotDetails(slot.id) : null
-              
+
               return (
                 <div key={slot.id} className="save-slot" style={{
                   background: 'rgba(255, 255, 255, 0.05)',
@@ -267,7 +267,7 @@ const SaveSlots = ({
                   <div style={{
                     width: '50px',
                     height: '50px',
-                    background: slot.id === 1 
+                    background: slot.id === 1
                       ? 'rgba(76, 175, 80, 0.2)'
                       : 'rgba(218, 165, 32, 0.2)',
                     borderRadius: '10px',
@@ -338,8 +338,8 @@ const SaveSlots = ({
         {/* Load Tab */}
         {activeTab === 'load' && (
           <div className="load-slots">
-            <div style={{ 
-              background: 'rgba(218, 165, 32, 0.1)', 
+            <div style={{
+              background: 'rgba(218, 165, 32, 0.1)',
               border: '1px solid rgba(218, 165, 32, 0.3)',
               borderRadius: '8px',
               padding: '1rem',
@@ -350,7 +350,7 @@ const SaveSlots = ({
                 💡 Select a save slot to load your character
               </p>
             </div>
-            
+
             {saveSlots.filter(s => s.hasData).length === 0 ? (
               <div style={{
                 textAlign: 'center',
@@ -376,15 +376,15 @@ const SaveSlots = ({
                     cursor: 'pointer',
                     transition: 'all 0.2s',
                   }}
-                  onClick={() => handleLoad(slot.id)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.border = '1px solid #DAA520'
-                    e.currentTarget.style.background = 'rgba(218, 165, 32, 0.1)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.1)'
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-                  }}
+                    onClick={() => handleLoad(slot.id)}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.border = '1px solid #DAA520'
+                      e.currentTarget.style.background = 'rgba(218, 165, 32, 0.1)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.border = '1px solid rgba(255, 255, 255, 0.1)'
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
+                    }}
                   >
                     <div style={{
                       width: '60px',
@@ -432,7 +432,7 @@ const SaveSlots = ({
               <p style={{ color: '#888', fontSize: '0.9rem', marginBottom: '1rem' }}>
                 Download your save file to back up or share your progress.
               </p>
-              
+
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {saveSlots.filter(s => s.hasData).map(slot => (
                   <button
@@ -457,7 +457,7 @@ const SaveSlots = ({
               <p style={{ color: '#888', fontSize: '0.9rem', marginBottom: '1rem' }}>
                 Load a previously exported save file.
               </p>
-              
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -465,7 +465,7 @@ const SaveSlots = ({
                 onChange={handleImport}
                 style={{ display: 'none' }}
               />
-              
+
               <button
                 className="btn btn-secondary"
                 onClick={() => fileInputRef.current?.click()}
@@ -473,7 +473,7 @@ const SaveSlots = ({
               >
                 📁 Choose File to Import
               </button>
-              
+
               <p style={{ color: '#666', fontSize: '0.8rem', marginTop: '0.5rem', textAlign: 'center' }}>
                 Save will be imported to Slot 2 or 3
               </p>
@@ -509,8 +509,9 @@ const SaveSlots = ({
         
         .btn-primary {
           background: linear-gradient(135deg, #8B0000, #FF4500);
-          color: white;
+          color: #ffffff !important;
           box-shadow: 0 4px 15px rgba(139, 0, 0, 0.4);
+          text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
         }
         
         .btn-primary:hover:not(:disabled) {
@@ -521,17 +522,19 @@ const SaveSlots = ({
         .btn-primary:disabled {
           opacity: 0.5;
           cursor: not-allowed;
+          color: #cccccc !important;
         }
         
         .btn-secondary {
-          background: rgba(0, 0, 0, 0.5);
-          color: var(--secondary);
-          border: 1px solid var(--secondary);
+          background: #333333;
+          color: #DAA520;
+          border: 1px solid #DAA520;
+          text-shadow: none;
         }
         
         .btn-secondary:hover {
-          background: var(--secondary);
-          color: var(--dark);
+          background: #DAA520;
+          color: #000000;
         }
         
         .btn-danger {
