@@ -78,6 +78,10 @@ function App() {
 
   // Handle loading a saved game
   const handleLoadSave = useCallback((savedData) => {
+    // Close save menu first and navigate immediately
+    setShowSaveMenu(false)
+    navigate('/worldmap', { replace: true })
+
     // Set the gladiator data
     setGladiator({
       ...savedData.gladiator,
@@ -98,10 +102,6 @@ function App() {
     if (savedData.settings) {
       setSettings(savedData.settings)
     }
-
-    // Close save menu and navigate to world map or arena
-    setShowSaveMenu(false)
-    navigate('/worldmap')
   }, [navigate])
 
   const handleSplashComplete = () => {

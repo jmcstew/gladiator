@@ -643,42 +643,64 @@ function Arena({
           />
         ) : !battle ? (
           <div className="battle-start">
-            <p style={{ marginBottom: '1rem' }}>Choose your challenge in {gladiator.current_city || 'Capua'}:</p>
+            {/* Arena Floor Animation */}
+            <div className="arena-floor">
+              <div className="arena-sand"></div>
+              <div className="arena-lines"></div>
+            </div>
+            
+            <p style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Choose your challenge in {gladiator.current_city || 'Capua'}:</p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
-                className="btn btn-primary"
+                className="btn btn-primary battle-btn"
                 onClick={() => startBattle('arena')}
                 disabled={loading}
               >
-                ⚔️ Arena Fight
+                <span className="btn-icon">⚔️</span>
+                <span>Arena Fight</span>
               </button>
               <button
-                className="btn btn-secondary"
+                className="btn btn-secondary battle-btn"
                 onClick={() => startBattle('tournament')}
                 disabled={loading}
               >
-                🏆 Tournament
+                <span className="btn-icon">🏆</span>
+                <span>Tournament</span>
               </button>
               {gladiator.current_city === 'Rome' && (
                 <button
-                  className="btn btn-danger"
+                  className="btn btn-danger battle-btn boss-btn"
                   onClick={() => startBattle('boss')}
                   disabled={loading}
                 >
-                  👹 BOSS: Emperor's Champion
+                  <span className="btn-icon">👹</span>
+                  <span>BOSS: Emperor's Champion</span>
                 </button>
               )}
             </div>
 
             {gladiator.current_city !== 'Capua' && (
-              <p className="warning-text">
+              <p className="warning-text pulse-warning">
                 ⚠️ Warning: Outside Capua, defeat means capture and equipment loss!
               </p>
             )}
           </div>
         ) : (
           <div className="battle-active">
-            <h4>VS {battle.opponent_name}</h4>
+            {/* Enhanced VS Display */}
+            <div className="vs-display">
+              <div className="vs-badge">
+                <span className="vs-text">VS</span>
+                <span className="vs-glow"></span>
+              </div>
+              <h4 className="vs-opponent">{battle.opponent_name}</h4>
+            </div>
+
+            {/* Round Counter */}
+            <div className="round-counter">
+              <span className="round-label">ROUND</span>
+              <span className="round-number">{battle.rounds || 1}</span>
+            </div>
 
             {/* Combat Effect */}
             {showEffect && (
@@ -715,10 +737,40 @@ function Arena({
               />
             </div>
 
-            <div className="battle-log" ref={logRef}>
-              {log.map((entry, i) => (
-                <div key={i} className="round">{entry}</div>
-              ))}
+            {/* Battle Log with enhanced styling */}
+            <div className="battle-log enhanced-log" ref={logRef}>
+              {log.length === 0 ? (
+                <div className="log-placeholder">
+                  <span className="placeholder-icon">⚔️</span>
+                  <p>The battle awaits...</p>
+                </div>
+              ) : (
+                log.map((entry, i) => (
+                  <div 
+                    key={i} 
+                    className={`round ${entry.includes('VICTORY') ? 'victory' : ''} ${entry.includes('DEFEAT') ? 'defeat' : ''}`}
+                  >
+                    {entry}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Action Feedback Indicators */}
+            <div className="action-indicators">
+              <div className="turn-indicator">
+                {loading ? (
+                  <>
+                    <span className="thinking-dots"></span>
+                    <span>Battle in progress...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="ready-dot"></span>
+                    <span>Your turn!</span>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Loot Modal */}
@@ -755,39 +807,42 @@ function Arena({
               </div>
             )}
 
-            <div className="battle-controls">
+            <div className="battle-controls enhanced-controls">
               <button
-                className="btn btn-primary"
+                className="btn btn-primary control-btn attack-btn"
                 onClick={() => takeAction('attack')}
                 disabled={loading}
               >
-                🗡️ Attack
+                <span className="control-icon">🗡️</span>
+                <span className="control-label">ATTACK</span>
+                <span className="control-desc">Deal damage</span>
               </button>
               <button
-                className="btn btn-secondary"
+                className="btn btn-secondary control-btn defend-btn"
                 onClick={() => takeAction('defend')}
                 disabled={loading}
               >
-                🛡️ Defend
+                <span className="control-icon">🛡️</span>
+                <span className="control-label">DEFEND</span>
+                <span className="control-desc">Reduce damage</span>
               </button>
               <button
-                className="btn btn-secondary"
+                className="btn btn-secondary control-btn special-btn"
                 onClick={() => takeAction('special')}
                 disabled={loading}
               >
-                ✨ Special
+                <span className="control-icon">✨</span>
+                <span className="control-label">SPECIAL</span>
+                <span className="control-desc">High damage, may miss</span>
               </button>
               <button
-                className="btn btn-plead"
+                className="btn btn-plead control-btn plead-btn"
                 onClick={() => takeAction('plead')}
                 disabled={loading}
-                style={{
-                  background: 'linear-gradient(135deg, #6A5ACD, #9370DB)',
-                  color: 'white',
-                  border: '2px solid #DDA0DD'
-                }}
               >
-                🙏 Plead
+                <span className="control-icon">🙏</span>
+                <span className="control-label">PLEAD</span>
+                <span className="control-desc">{gladiator.charisma ? `~${Math.min(80, 20 + gladiator.charisma * 1.5).toFixed(0)}% chance` : '~20% chance'}</span>
               </button>
             </div>
           </div>
@@ -804,12 +859,10 @@ function Arena({
               setBattle={setBattle}
               onVictory={(victoryData) => {
                 setLowBlowVictory(victoryData)
-                // Track low blow achievement
                 setCombatStats(prev => ({
                   ...prev,
                   lowBlowUsed: (prev.lowBlowUsed || 0) + 1,
                 }))
-                // Trigger victory
                 setVictoryData(victoryData)
                 setTimeout(() => setLowBlowVictory(null), 2500)
               }}
@@ -822,9 +875,123 @@ function Arena({
                 />
               </div>
             </LowBlowTrigger>
-            <p>{battle.opponent_name}</p>
-            <p>Level {battle.opponent_level}</p>
-            <p className="opponent-city">📍 {battle.opponent_city || gladiator.current_city}</p>
+            
+            {/* Opponent Name & Level */}
+            <p className="opponent-name" style={{ 
+              fontFamily: 'Cinzel, serif', 
+              fontSize: '1.2rem', 
+              color: '#ff6b6b',
+              fontWeight: 'bold',
+              marginBottom: '0.25rem'
+            }}>
+              {battle.opponent_name}
+            </p>
+            <p className="opponent-level" style={{ 
+              color: '#ffa500', 
+              fontSize: '0.95rem',
+              marginBottom: '0.5rem'
+            }}>
+              Level {battle.opponent_level}
+            </p>
+            <p className="opponent-city" style={{ 
+              opacity: 0.8, 
+              fontSize: '0.85rem',
+              marginBottom: '0.75rem'
+            }}>
+              📍 {battle.opponent_city || gladiator.current_city}
+            </p>
+
+            {/* Opponent Stats - Mirroring Player */}
+            <div className="stats-grid opponent-stats" style={{ 
+              marginTop: '1rem',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '0.5rem',
+              padding: '0.75rem',
+              background: 'rgba(139, 0, 0, 0.2)',
+              borderRadius: '10px',
+              border: '1px solid rgba(255, 68, 68, 0.3)'
+            }}>
+              <div className="stat opponent-stat">
+                <div className="stat-value" style={{ 
+                  color: '#ff6b6b',
+                  fontSize: '1.1rem',
+                  textShadow: '0 0 10px rgba(255, 68, 68, 0.5)'
+                }}>
+                  {battle.opponent_strength || battle.opponent_level + 10}
+                </div>
+                <div className="stat-label" style={{ 
+                  color: '#ff6b6b',
+                  fontSize: '0.7rem'
+                }}>
+                  STR
+                </div>
+              </div>
+              <div className="stat opponent-stat">
+                <div className="stat-value" style={{ 
+                  color: '#ff6b6b',
+                  fontSize: '1.1rem',
+                  textShadow: '0 0 10px rgba(255, 68, 68, 0.5)'
+                }}>
+                  {battle.opponent_agility || battle.opponent_level + 8}
+                </div>
+                <div className="stat-label" style={{ 
+                  color: '#ff6b6b',
+                  fontSize: '0.7rem'
+                }}>
+                  AGI
+                </div>
+              </div>
+              <div className="stat opponent-stat">
+                <div className="stat-value" style={{ 
+                  color: '#ff6b6b',
+                  fontSize: '1.1rem',
+                  textShadow: '0 0 10px rgba(255, 68, 68, 0.5)'
+                }}>
+                  {battle.opponent_endurance || battle.opponent_level + 12}
+                </div>
+                <div className="stat-label" style={{ 
+                  color: '#ff6b6b',
+                  fontSize: '0.7rem'
+                }}>
+                  END
+                </div>
+              </div>
+            </div>
+
+            {/* Opponent HP Preview */}
+            <div style={{ 
+              marginTop: '1rem',
+              padding: '0.5rem',
+              background: 'rgba(0, 0, 0, 0.3)',
+              borderRadius: '8px',
+              fontSize: '0.85rem'
+            }}>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                color: '#ff6b6b',
+                marginBottom: '0.25rem'
+              }}>
+                <span>HP</span>
+                <span>{opponentHP} / {maxOpponentHP}</span>
+              </div>
+              <div style={{
+                width: '100%',
+                height: '8px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '4px',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  width: `${(opponentHP / maxOpponentHP) * 100}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #ff4444, #ff6b6b)',
+                  borderRadius: '4px',
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+            </div>
           </>
         ) : (
           <p style={{ opacity: 0.7 }}>Select a battle to see your opponent</p>
